@@ -1,224 +1,98 @@
-# 🚀 Save Restricted Content Bot (Advanced)
+# UnknownBotz — Save Restricted Content Bot
 
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10+-blue?logo=python&style=for-the-badge">
   <img src="https://img.shields.io/badge/Library-Pyrogram-yellow?logo=telegram&style=for-the-badge">
   <img src="https://img.shields.io/badge/Database-MongoDB-green?logo=mongodb&style=for-the-badge">
-  <img src="https://img.shields.io/badge/Status-Stable-success?style=for-the-badge">
 </p>
 
-<p align="center">
-<b>A cleaner and improved version of the Save Restricted Content Bot with a better structure, smoother workflow, and practical features for real usage.</b>
-</p>
-
-<p align="center">
-  <a href="https://github.com/abhinai2244/SAVE-RESTRICT-BOT">
-    <img src="https://img.shields.io/badge/View-Original%20Repository-black?style=for-the-badge&logo=github">
-  </a>
-</p>
-
----
-
-## 🔗 Quick Links
-
-<p align="center">
-  <a href="#-features"><img src="https://img.shields.io/badge/Features-View-blue?style=for-the-badge"></a>
-  <a href="#-deployment"><img src="https://img.shields.io/badge/Deployment-Setup-green?style=for-the-badge"></a>
-  <a href="#-commands"><img src="https://img.shields.io/badge/Commands-List-orange?style=for-the-badge"></a>
-  <a href="#-support"><img src="https://img.shields.io/badge/Support-Telegram-blue?style=for-the-badge&logo=telegram"></a>
-</p>
-
----
-
-# 🚀 Features
-
-<details open>
-<summary><b>📦 Core Features</b></summary>
-
-- **Save Restricted Content** — Download text, media, and files from restricted channels.
-- **Batch Mode** — Bulk download messages from public or private channels with auto-detection.
-- **User Login** — Login using `/login` to enable downloading capabilities.
-
-### ⚙️ Customization
-
-- Set custom captions (`/set_caption`)
-- Set custom thumbnails (`/set_thumb`)
-- Auto-delete or replace specific words
-
-### 💎 Premium System
-
-- Built-in system for free and premium users
-- Admin-controlled premium access
-
-### 👑 Admin Tools
-
-- Broadcast messages
-- Ban / Unban users
-- Manage premium status
-
-### 🧠 Persistent Storage
-
-- MongoDB-based user data and settings
-
-### ☁️ Keep Alive
-
-- Supports uptime services for Render / Heroku deployments
-
-</details>
-
----
-
-# 🛠 Deployment
-
-## ✅ Prerequisites
-
-- Python **3.10+**
-- MongoDB Database
-- Telegram API ID & Hash
-- Bot Token
+A Telegram bot to save restricted/private channel content with batch support, real-time progress, and a dump channel system.
 
 ---
 
 ## ⚙️ Environment Variables
 
-<details>
-<summary><b>Click to Expand</b></summary>
-
-| Variable        | Description                                |
-| --------------- | ------------------------------------------ |
-| `BOT_TOKEN`     | Telegram Bot Token from BotFather          |
-| `API_ID`        | Telegram API ID                            |
-| `API_HASH`      | Telegram API Hash                          |
-| `ADMINS`        | Comma-separated Admin User IDs             |
-| `DB_URI`        | MongoDB Connection String                  |
-| `DB_NAME`       | Database Name (default: `SaveRestricted2`) |
-| `LOG_CHANNEL`   | Channel ID for logging users and errors    |
-| `ERROR_MESSAGE` | Send error messages to users               |
-| `KEEP_ALIVE`    | Use an uptime service like UptimeRobot     |
-
-</details>
+| Variable | Description |
+|---|---|
+| `BOT_TOKEN` | Telegram Bot Token from BotFather |
+| `API_ID` | Telegram API ID |
+| `API_HASH` | Telegram API Hash |
+| `ADMINS` | Comma-separated admin user IDs |
+| `DB_URI` | MongoDB connection string |
+| `DB_NAME` | Database name (default: `src`) |
+| `LOG_CHANNEL` | Channel ID for bot logs |
+| `UPI_ID` | UPI ID for premium payments |
+| `QR_CODE` | QR code image URL for payments |
 
 ---
 
-## 💻 Local Setup
+## 🚀 Setup
 
-<details open>
-<summary><b>Installation Steps</b></summary>
-
-### Clone the repository
-
+**Local**
 ```bash
-git clone https://github.com/abhinai2244/SAVE-RESTRICT-BOT.git
-cd SAVE-RESTRICT-BOT
-```
-
-### Install dependencies
-
-```bash
+git clone <your-repo-url>
+cd <repo>
 pip install -r requirements.txt
-```
-
-### Run the bot
-
-```bash
 python bot.py
 ```
 
-</details>
-
----
-
-## 🐳 Docker
-
+**Docker**
 ```bash
-docker build -t save-restricted-bot .
-docker run -d --env-file .env save-restricted-bot
+docker build -t unknownbotz .
+docker run -d --env-file .env unknownbotz
 ```
 
 ---
 
-# 📝 Commands
+## 📝 Commands
 
-## 👤 User Commands
+### User
+| Command | Description |
+|---|---|
+| `/start` | Start the bot |
+| `/help` | Show guide |
+| `/login` | Login for restricted content |
+| `/logout` | Logout session |
+| `/cancel` | Cancel ongoing batch |
+| `/settings` | Open settings panel |
+| `/myplan` | Check plan & usage |
+| `/premium` | View premium plans |
+| `/setchnl <id>` | Set dump channel (bot must be admin) |
+| `/remchnl` | Remove dump channel |
+| `/set_caption <text>` | Set custom caption |
+| `/see_caption` | View current caption |
+| `/del_caption` | Delete caption |
+| `/set_thumb` | Set custom thumbnail (reply to photo) |
+| `/view_thumb` | View thumbnail |
+| `/del_thumb` | Delete thumbnail |
+| `/set_del_word` | Add word to delete list |
+| `/rem_del_word` | Remove word from delete list |
+| `/set_repl_word` | Add word replacement |
+| `/rem_repl_word` | Remove word replacement |
 
-<details>
-<summary><b>Click to Expand</b></summary>
-
-| Command     | Action                   |
-| ----------- | ------------------------ |
-| `/start`    | Start the bot            |
-| `/help`     | Get help information     |
-| `/login`    | Login to your account    |
-| `/logout`   | Logout from your account |
-| `/cancel`   | Cancel batch process     |
-| `/settings` | Open settings menu       |
-| `/myplan`   | Check your current plan  |
-| `/premium`  | View premium details     |
-
-### ⚙️ Customization
-
-- `/set_caption`
-- `/see_caption`
-- `/del_caption`
-- `/set_thumb`
-- `/view_thumb`
-- `/del_thumb`
-- `/thumb_mode`
-- `/set_del_word`
-- `/rem_del_word`
-- `/set_repl_word`
-- `/rem_repl_word`
-- `/setchat`
-
-</details>
-
----
-
-## 👑 Admin Commands
-
-<details>
-<summary><b>Click to Expand</b></summary>
-
-- `/broadcast`
-- `/ban` / `/unban`
-- `/add_premium` / `/remove_premium`
-- `/users`
-- `/premium_users`
-- `/set_dump`
-- `/dblink`
-
-</details>
+### Admin
+| Command | Description |
+|---|---|
+| `/broadcast` | Broadcast message to all users |
+| `/users` | Get user list (JSON export) |
+| `/ban <id>` | Ban a user |
+| `/unban <id>` | Unban a user |
+| `/add_premium <id> <days>` | Grant premium (0 = permanent) |
+| `/remove_premium <id>` | Revoke premium |
+| `/set_dump <user_id> <chat_id>` | Set dump channel for a user |
+| `/dblink` | Get DB URI |
 
 ---
 
-# 🤝 Contributors
+## 📌 Notes
 
-<p align="center">
-  <a href="https://t.me/about_zani">
-    <img src="https://img.shields.io/badge/Abhi-Telegram-blue?style=for-the-badge&logo=telegram">
-  </a>
-  &nbsp;
-  <a href="https://github.com/LastPerson07/">
-    <img src="https://img.shields.io/badge/LastPerson07-GitHub-black?style=for-the-badge&logo=github">
-  </a>
-</p>
+- **Dump channel is required** before saving any file. Set it with `/setchnl` — bot must be an admin there.
+- **Free users:** 10 saves/day, 2 GB file size limit.
+- **Premium users:** Unlimited saves, 4 GB+ file support.
+- Batch links format: `https://t.me/channel/100-200`
 
 ---
 
-# 📞 Support
+## 📞 Support
 
-<p align="center">
-  <a href="https://t.me/cantarellabots">
-    <img src="https://img.shields.io/badge/cantarella-Official%20Channel-blue?style=for-the-badge&logo=telegram">
-  </a>
-  <br><br>
-  <a href="https://t.me/THEUPDATEDGUYS">
-    <img src="https://img.shields.io/badge/Updates-Channel-blue?style=for-the-badge&logo=telegram">
-  </a>
-</p>
-
----
-
-<p align="center">
-⭐ If this project helped you, consider starring the repository!
-</p>
+- Telegram: [@UnknownBotz](https://t.me/UnknownBotz)
