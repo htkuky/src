@@ -1,5 +1,5 @@
 # Developed by: UnknownBotz
-# Telegram: @UnknownBotz | @THEUPDATEDGUYS
+# Telegram: @UnknownBotz |
 import os
 import asyncio
 import random
