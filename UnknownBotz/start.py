@@ -526,4 +526,218 @@ async def save(client: Client, message: Message):
 
 # ── Handle one restricted message ────────────
 
-async def handle_restricted_content(client, acc, message, chat_targ
+async def handle_restricted_content(client, acc, message, chat_target,
+                                     msgid, dump_chat, state: UserBatchState):
+    uid = message.from_user.id
+    try:
+        msg = await acc.get_messages(chat_target, msgid)
+    except Exception as e:
+        logger.error(f"Fetch #{msgid}: {e}")
+        return True
+
+    if not msg or msg.empty:
+        return True
+
+    msg_type = get_message_type(msg)
+    if not msg_type:
+        return True
+
+    file_size = 0
+    if msg_type == "Document": file_size = msg.document.file_size
+    elif msg_type == "Video":  file_size = msg.video.file_size
+    elif msg_type == "Audio":  file_size = msg.audio.file_size
+
+    if file_size > FREE_LIMIT_SIZE and not await db.check_premium(uid):
+        await client.send_message(dump_chat, script.SIZE_LIMIT,
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("💎 Upgrade", callback_data="buy_premium")
+            ]]), parse_mode=enums.ParseMode.HTML)
+        return True
+
+    if msg_type == "Text":
+        try:
+            await client.send_message(dump_chat, msg.text,
+                entities=msg.entities, parse_mode=enums.ParseMode.HTML)
+        except Exception:
+            pass
+        return True
+
+    await db.add_traffic(uid)
+
+    if msg_type == "Document": fn = msg.document.file_name or f"document_{msgid}"
+    elif msg_type == "Video":  fn = msg.video.file_name   or f"video_{msgid}.mp4"
+    elif msg_type == "Audio":  fn = msg.audio.file_name   or f"audio_{msgid}.mp3"
+    else:                      fn = f"photo_{msgid}.jpg"
+
+    state.current_filename = fn
+    tmp = f"downloads/{uid}_{msgid}"
+    os.makedirs(tmp, exist_ok=True)
+
+    # Download
+    try:
+        file = await acc.download_media(
+            msg, file_name=f"{tmp}/",
+            progress=batch_progress_callback,
+            progress_args=[state, fn, "down"]
+        )
+    except asyncio.CancelledError:           # FIX 4a — clean cancel, no error log
+        shutil.rmtree(tmp, ignore_errors=True)
+        return True
+    except Exception as e:
+        shutil.rmtree(tmp, ignore_errors=True)
+        if not state.cancelled:
+            logger.error(f"Download #{msgid}: {e}")
+        return True
+
+    if not file:
+        shutil.rmtree(tmp, ignore_errors=True)
+        return True
+
+    state.file_start = time.time()   # reset for upload phase
+
+    # Thumbnail
+    ph = None
+    tid = await db.get_thumbnail(uid)
+    if tid:
+        try:
+            ph = await client.download_media(tid, file_name=f"{tmp}/custom_thumb.jpg")
+        except Exception:
+            pass
+    if not ph:
+        try:
+            if msg_type == "Video" and msg.video.thumbs:
+                ph = await acc.download_media(msg.video.thumbs[0].file_id, file_name=f"{tmp}/thumb.jpg")
+            elif msg_type == "Document" and msg.document.thumbs:
+                ph = await acc.download_media(msg.document.thumbs[0].file_id, file_name=f"{tmp}/thumb.jpg")
+        except Exception:
+            pass
+
+    # Caption
+    cc = await db.get_caption(uid)
+    if cc:
+        cap = cc.format(filename=fn, size=humanbytes(file_size))
+    else:
+        cap = script.CAPTION
+        if msg.caption:
+            cap += f"\n\n{msg.caption}"
+
+    # Upload
+    try:
+        if msg_type == "Document":
+            await client.send_document(
+                dump_chat, file, thumb=ph, caption=cap,
+                progress=batch_progress_callback, progress_args=[state, fn, "up"])
+        elif msg_type == "Video":
+            await client.send_video(
+                dump_chat, file,
+                duration=msg.video.duration, width=msg.video.width, height=msg.video.height,
+                thumb=ph, caption=cap,
+                progress=batch_progress_callback, progress_args=[state, fn, "up"])
+        elif msg_type == "Audio":
+            await client.send_audio(
+                dump_chat, file, thumb=ph, caption=cap,
+                progress=batch_progress_callback, progress_args=[state, fn, "up"])
+        elif msg_type == "Photo":
+            await client.send_photo(dump_chat, file, caption=cap)
+
+    except asyncio.CancelledError:           # FIX 4a
+        pass
+
+    except (ChannelInvalid, ChannelPrivate,  # FIX 4b — invalid dump channel
+            ChatAdminRequired, ChatWriteForbidden) as e:
+        logger.error(f"Dump channel invalid (user {uid}): {e}")
+        await _safe_edit(state.progress_msg,
+            "❌ <b>Dump channel error!</b>\n"
+            "<blockquote>Bot was removed or lost admin rights.\n"
+            "Use /setchnl to set a new dump channel.</blockquote>",
+            markup=None)
+        await db.del_dump_chat(uid)
+        state.cancelled = True
+
+    except Exception as e:
+        if not state.cancelled:
+            logger.error(f"Upload #{msgid}: {e}")
+
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+    return False if state.cancelled else True
+
+
+# ── Callback router ───────────────────────────
+
+@Client.on_callback_query(group=1)
+async def button_callbacks(client: Client, cq: CallbackQuery):
+    data = cq.data
+    msg  = cq.message
+    if not msg or data.startswith("cancel_batch_"):
+        return
+
+    if data == "dev_info":
+        await cq.answer(dev_text, show_alert=True)
+
+    elif data == "channels_info":
+        await cq.answer(channels_text, show_alert=True)
+
+    elif data == "settings_btn":
+        await settings_panel(client, cq)
+
+    elif data == "buy_premium":
+        await client.edit_message_media(
+            msg.chat.id, msg.id,
+            media=InputMediaPhoto(SUBSCRIPTION, caption=script.PREMIUM_TEXT.format(UPI_ID, QR_CODE)),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("📸 Send Payment Proof", url="https://t.me/DmOwner")],
+                [InlineKeyboardButton("⬅️ Back", callback_data="start_btn")]
+            ])
+        )
+
+    elif data == "help_btn":
+        await client.edit_message_caption(
+            msg.chat.id, msg.id, caption=script.HELP_TXT,
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("⬅️ Back", callback_data="start_btn")
+            ]]),
+            parse_mode=enums.ParseMode.HTML
+        )
+
+    elif data == "about_btn":
+        await client.edit_message_caption(
+            msg.chat.id, msg.id, caption=script.ABOUT_TXT,
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("⬅️ Back", callback_data="start_btn")
+            ]]),
+            parse_mode=enums.ParseMode.HTML
+        )
+
+    elif data == "start_btn":
+        bot = await client.get_me()
+        try:
+            r = requests.get(random.choice([
+                "https://api.waifu.pics/sfw/waifu",
+                "https://nekos.life/api/v2/img/waifu"
+            ]), timeout=5)
+            photo_url = r.json()["url"]
+        except Exception:
+            photo_url = "https://i.postimg.cc/cC7txyhz/15.png"
+        await client.edit_message_media(
+            msg.chat.id, msg.id,
+            media=InputMediaPhoto(photo_url, caption=script.START_TXT.format(
+                cq.from_user.mention, bot.username, bot.first_name)),
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("💎 Buy Premium",    callback_data="buy_premium"),
+                 InlineKeyboardButton("🆘 Help & Guide",   callback_data="help_btn")],
+                [InlineKeyboardButton("⚙️ Settings Panel", callback_data="settings_btn"),
+                 InlineKeyboardButton("ℹ️ About Bot",      callback_data="about_btn")],
+                [InlineKeyboardButton("📢 Channels",       callback_data="channels_info"),
+                 InlineKeyboardButton("👨‍💻 Developers",    callback_data="dev_info")],
+            ])
+        )
+
+    elif data == "close_btn":
+        await msg.delete()
+
+    try:
+        await cq.answer()
+    except Exception:
+        pass
