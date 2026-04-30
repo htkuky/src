@@ -114,7 +114,7 @@ class Bot(Client):
         logger.info("Bot stopped cleanly")
 
     async def set_bot_commands_list(self):
-        commands = 
+        commands = [
     BotCommand("start", "⚡️ sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ / ᴄʜᴇᴄᴋ ᴀʟɪᴠᴇ"),
     BotCommand("help", "⚡️ ɢᴇᴛ ʜᴇʟᴘ & ᴜsᴀɢᴇ ɢᴜɪᴅᴇ"),
     BotCommand("login", "🔐 ʟᴏɢɪɴ ᴛᴏ ᴀᴄᴄᴇss ᴘʀɪᴠᴀᴛᴇ ᴄᴏɴᴛᴇɴᴛ"),
@@ -137,7 +137,7 @@ class Bot(Client):
 
 #    BotCommand("set_repl_word", "🔄 ᴀᴅᴅ ʀᴇᴘʟᴀᴄᴇ ᴡᴏʀᴅ"),
 #    BotCommand("rem_repl_word", "♻️ ʀᴇᴍᴏᴠᴇ ʀᴇᴘʟᴀᴄᴇ ᴡᴏʀᴅ"),
-    
+        ]
         await self.set_bot_commands(commands)
 
 
