@@ -244,41 +244,43 @@ async def batch_progress_callback(current, total, state: UserBatchState,
 
 
 # ── /start ────────────────────────────────────
-
 @Client.on_message(filters.command(["start"]))
 async def send_start(client: Client, message: Message):
+
+    # Add user to DB if not exists
     if not await db.is_user_exist(message.from_user.id):
         await db.add_user(message.from_user.id, message.from_user.first_name)
+
+    # Add reaction (optional)
     try:
         await message.react(emoji=random.choice(REACTIONS), big=True)
     except Exception:
         pass
 
-    try:
-        r = requests.get(random.choice([
-            "https://api.waifu.pics/sfw/waifu",
-            "https://nekos.life/api/v2/img/waifu"
-        ]), timeout=5)
-        photo_url = r.json()["url"]
-    except Exception:
-        photo_url = "https://i.postimg.cc/kX9tjGXP/16.png"
-
+    # Get bot info
     bot = await client.get_me()
-    await client.send_photo(
-        chat_id=message.chat.id,
-        photo=photo_url,
-        caption=script.START_TXT.format(message.from_user.mention, bot.username, bot.first_name),
+
+    # Send text message instead of photo
+    await message.reply_text(
+        text=script.START_TXT.format(
+            message.from_user.mention,
+            bot.username,
+            bot.first_name
+        ),
         reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("💎 Buy Premium",    callback_data="buy_premium"),
-             InlineKeyboardButton("🆘 Help & Guide",   callback_data="help_btn")],
-            [InlineKeyboardButton("⚙️ Settings Panel", callback_data="settings_btn"),
-             InlineKeyboardButton("ℹ️ About Bot",      callback_data="about_btn")],
-            [InlineKeyboardButton("📢 Channels",       callback_data="channels_info"),
-             InlineKeyboardButton("👨‍💻 Developers",    callback_data="dev_info")],
+            [
+                InlineKeyboardButton('ᴜᴘᴅᴀᴛᴇ', url='https://t.me/UnknownBotz'),
+                InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ', url='https://t.me/UnknownBotzChat')
+            ],
+            [
+                InlineKeyboardButton("sᴇᴛᴛɪɴɢs", callback_data="settings_btn"),
+                InlineKeyboardButton("ᴀʙᴏᴜᴛ", callback_data="about_btn")
+            ]
         ]),
-        reply_to_message_id=message.id,
-        parse_mode=enums.ParseMode.HTML
+        parse_mode=enums.ParseMode.HTML,
+        disable_web_page_preview=True
     )
+    
 
 
 # ── /help ─────────────────────────────────────
