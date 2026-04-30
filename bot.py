@@ -114,26 +114,29 @@ class Bot(Client):
         logger.info("Bot stopped cleanly")
 
     async def set_bot_commands_list(self):
-        commands = [
-            BotCommand("start", "Start the bot"),
-            BotCommand("help", "Show help"),
-            BotCommand("login", "Login"),
-            BotCommand("logout", "Logout"),
-            BotCommand("cancel", "Cancel current action"),
-            BotCommand("myplan", "Check your plan"),
-            BotCommand("premium", "Premium info"),
-            BotCommand("setchnl", "Set dump channel"),
-            BotCommand("remchnl", "Remove dump channel"),
-            BotCommand("set_thumb", "Set thumbnail"),
-            BotCommand("view_thumb", "View thumbnail"),
-            BotCommand("del_thumb", "Delete thumbnail"),
-            BotCommand("set_caption", "Set caption"),
-            BotCommand("see_caption", "View caption"),
-            BotCommand("del_caption", "Delete caption"),
-            BotCommand("set_del_word", "Add delete word"),
-            BotCommand("rem_del_word", "Remove delete word"),
-            BotCommand("set_repl_word", "Add replace word"),
-            BotCommand("rem_repl_word", "Remove replace word"),
+        commands = 
+    BotCommand("start", "⚡️ sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ / ᴄʜᴇᴄᴋ ᴀʟɪᴠᴇ"),
+    BotCommand("help", "⚡️ ɢᴇᴛ ʜᴇʟᴘ & ᴜsᴀɢᴇ ɢᴜɪᴅᴇ"),
+    BotCommand("login", "🔐 ʟᴏɢɪɴ ᴛᴏ ᴀᴄᴄᴇss ᴘʀɪᴠᴀᴛᴇ ᴄᴏɴᴛᴇɴᴛ"),
+    BotCommand("logout", "🔓 ʟᴏɢᴏᴜᴛ ғʀᴏᴍ ʏᴏᴜʀ ᴀᴄᴄᴏᴜɴᴛ"),
+    BotCommand("cancel", "❌ ᴄᴀɴᴄᴇʟ ᴄᴜʀʀᴇɴᴛ ᴘʀᴏᴄᴇss"),
+    BotCommand("myplan", "💎 ᴄʜᴇᴄᴋ ʏᴏᴜʀ ᴘʟᴀɴ"),
+    BotCommand("premium", "💰 ᴠɪᴇᴡ ᴘʀᴇᴍɪᴜᴍ ᴘʟᴀɴs"),
+    BotCommand("setchnl", "📥 sᴇᴛ ᴅᴜᴍᴘ ᴄʜᴀɴɴᴇʟ"),
+    BotCommand("remchnl", "🗑 ʀᴇᴍᴏᴠᴇ ᴅᴜᴍᴘ ᴄʜᴀɴɴᴇʟ"),
+    BotCommand("set_thumb", "🖼 sᴇᴛ ᴛʜᴜᴍʙɴᴀɪʟ"),
+    BotCommand("view_thumb", "👀 ᴠɪᴇᴡ ᴛʜᴜᴍʙɴᴀɪʟ"),
+    BotCommand("del_thumb", "❌ ᴅᴇʟᴇᴛᴇ ᴛʜᴜᴍʙɴᴀɪʟ"),
+
+#    BotCommand("set_caption", "✏️ sᴇᴛ ᴄᴀᴘᴛɪᴏɴ"),
+#    BotCommand("see_caption", "👀 ᴠɪᴇᴡ ᴄᴀᴘᴛɪᴏɴ"),
+#    BotCommand("del_caption", "❌ ᴅᴇʟᴇᴛᴇ ᴄᴀᴘᴛɪᴏɴ"),
+
+#    BotCommand("set_del_word", "🚫 ᴀᴅᴅ ᴅᴇʟᴇᴛᴇ ᴡᴏʀᴅ"),
+#    BotCommand("rem_del_word", "♻️ ʀᴇᴍᴏᴠᴇ ᴅᴇʟᴇᴛᴇ ᴡᴏʀᴅ"),
+
+#    BotCommand("set_repl_word", "🔄 ᴀᴅᴅ ʀᴇᴘʟᴀᴄᴇ ᴡᴏʀᴅ"),
+#    BotCommand("rem_repl_word", "♻️ ʀᴇᴍᴏᴠᴇ ʀᴇᴘʟᴀᴄᴇ ᴡᴏʀᴅ"),
         ]
         await self.set_bot_commands(commands)
 
