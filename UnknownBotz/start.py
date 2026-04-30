@@ -88,16 +88,10 @@ def get_message_type(msg):
 
 class script:
     START_TXT = (
-        "<b>👋 Hello {},</b>\n"
-        "<b>🤖 I am <a href=https://t.me/{}>{}</a></b>\n"
-        "<i>Your Professional Restricted Content Saver Bot.</i>\n"
-        "<blockquote><b>🚀 System Status: 🟢 Online</b>\n"
-        "<b>⚡ Performance: 10x High-Speed Processing</b>\n"
-        "<b>🔐 Security: End-to-End Encrypted</b>\n"
-        "<b>📊 Uptime: 99.9% Guaranteed</b></blockquote>\n"
-        "<b>👇 Select an Option Below to Get Started:</b>\n"
+        "<b>👋🏻 Hᴇʏ {} ɪ ᴀᴍ sᴀᴠᴇ ʀᴇsᴛʀɪᴄᴛᴇᴀᴅ ᴄᴏɴᴛᴀɴᴛ ʙᴏᴛ 🤖</b>\n"
+        "<blockquote><b>ɪ ᴄᴀɴ ʜᴇʟᴘ ʏᴏᴜ ꜰᴏʀᴡᴀʀᴅ ʀᴇsᴛʀɪᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ ꜰʀᴏᴍ ᴛᴇʟᴇɢʀᴀᴍ ᴘᴏsᴛs.</b></blockquote>\n"
     )
-
+    
     HELP_TXT = (
         "<b>📚 Help & User Guide</b>\n"
         "<blockquote><b>1️⃣ Public Channels</b>\n"
