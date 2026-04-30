@@ -137,7 +137,7 @@ class Bot(Client):
 
 #    BotCommand("set_repl_word", "🔄 ᴀᴅᴅ ʀᴇᴘʟᴀᴄᴇ ᴡᴏʀᴅ"),
 #    BotCommand("rem_repl_word", "♻️ ʀᴇᴍᴏᴠᴇ ʀᴇᴘʟᴀᴄᴇ ᴡᴏʀᴅ"),
-        ]
+    
         await self.set_bot_commands(commands)
 
 
