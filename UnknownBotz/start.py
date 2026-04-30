@@ -25,7 +25,7 @@ logger = LOGGER(__name__)
 
 SUBSCRIPTION   = os.environ.get('SUBSCRIPTION', 'https://graph.org/file/242b7f1b52743938d81f1.jpg')
 FREE_LIMIT_SIZE = 2 * 1024 * 1024 * 1024
-UPI_ID  = os.environ.get("UPI_ID", "your_upi@oksbi")
+UPI_ID  = os.environ.get("UPI_ID", "nothingcopyright@airtel")
 QR_CODE = os.environ.get("QR_CODE", "https://graph.org/file/242b7f1b52743938d81f1.jpg")
 
 REACTIONS = [
