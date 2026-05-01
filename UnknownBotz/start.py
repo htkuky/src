@@ -23,9 +23,13 @@ from logger import LOGGER
 
 logger = LOGGER(__name__)
 
-SUBSCRIPTION   = os.environ.get('SUBSCRIPTION', 'https://graph.org/file/242b7f1b52743938d81f1.jpg')
+# ══════════════════════════════════════════════════════════════════════════════
+# 🖼  CUSTOMISABLE START IMAGE — replace with your own direct image URL
+# ══════════════════════════════════════════════════════════════════════════════
+START_IMG    = os.environ.get('START_IMG',    'https://i.postimg.cc/cC7txyhz/15.png')
+SUBSCRIPTION = os.environ.get('SUBSCRIPTION', 'https://graph.org/file/242b7f1b52743938d81f1.jpg')
 FREE_LIMIT_SIZE = 2 * 1024 * 1024 * 1024
-UPI_ID  = os.environ.get("UPI_ID", "nothingcopyright@airtel")
+UPI_ID  = os.environ.get("UPI_ID",  "nothingcopyright@airtel")
 QR_CODE = os.environ.get("QR_CODE", "https://graph.org/file/242b7f1b52743938d81f1.jpg")
 
 REACTIONS = [
@@ -49,7 +53,7 @@ if (
     raise Exception("Tampered developer info detected! Bot will not start.")
 
 
-# ── Helpers ──────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
 def humanbytes(size: int) -> str:
     if not size:
@@ -63,11 +67,11 @@ def humanbytes(size: int) -> str:
 
 
 def TimeFormatter(ms: int) -> str:
-    s, _   = divmod(int(ms), 1000)
-    m, s   = divmod(s, 60)
-    h, m   = divmod(m, 60)
-    d, h   = divmod(h, 24)
-    parts  = (
+    s, _  = divmod(int(ms), 1000)
+    m, s  = divmod(s, 60)
+    h, m  = divmod(m, 60)
+    d, h  = divmod(h, 24)
+    parts = (
         (f"{d}d, " if d else "") +
         (f"{h}h, " if h else "") +
         (f"{m}m, " if m else "") +
@@ -84,14 +88,87 @@ def get_message_type(msg):
     return None
 
 
-# ── Static texts ─────────────────────────────
+# ── Auto-delete helpers ───────────────────────────────────────────────────────
+
+async def auto_delete(msg: Message, delay: int = 90) -> None:
+    """Delete bot reply after `delay` seconds (default 90 s)."""
+    await asyncio.sleep(delay)
+    try:
+        await msg.delete()
+    except Exception:
+        pass
+
+
+async def delete_command(message: Message) -> None:
+    """Immediately delete the user's command message."""
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+
+# ── Uniform keyboard builders ─────────────────────────────────────────────────
+
+def start_keyboard() -> InlineKeyboardMarkup:
+    """Main /start keyboard — 2-per-row, uniform style."""
+    return InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("💎 Buy Premium",    callback_data="buy_premium"),
+            InlineKeyboardButton("🆘 Help & Guide",   callback_data="help_btn"),
+        ],
+        [
+            InlineKeyboardButton("⚙️ Settings",       callback_data="settings_btn"),
+            InlineKeyboardButton("ℹ️ About Bot",      callback_data="about_btn"),
+        ],
+        [
+            InlineKeyboardButton("📢 Channels",       callback_data="channels_info"),
+            InlineKeyboardButton("👨‍💻 Developers",    callback_data="dev_info"),
+        ],
+    ])
+
+
+def settings_keyboard() -> InlineKeyboardMarkup:
+    """Settings panel — same 2-per-row style as Start."""
+    return InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("📜 Commands",       callback_data="cmd_list_btn"),
+            InlineKeyboardButton("📊 Usage Stats",    callback_data="user_stats_btn"),
+        ],
+        [
+            InlineKeyboardButton("🗑 Dump Channel",   callback_data="dump_chat_btn"),
+            InlineKeyboardButton("🖼 Thumbnail",      callback_data="thumb_btn"),
+        ],
+        [
+            InlineKeyboardButton("📝 Caption",        callback_data="caption_btn"),
+            InlineKeyboardButton("🏠 Home",           callback_data="start_btn"),
+        ],
+        [
+            InlineKeyboardButton("❌ Close",          callback_data="close_btn"),
+        ],
+    ])
+
+
+def sub_panel_keyboard() -> InlineKeyboardMarkup:
+    """Back + Home + Close for every settings sub-panel."""
+    return InlineKeyboardMarkup([
+        [
+            InlineKeyboardButton("⬅️ Back",  callback_data="settings_back_btn"),
+            InlineKeyboardButton("🏠 Home",  callback_data="start_btn"),
+        ],
+        [
+            InlineKeyboardButton("❌ Close", callback_data="close_btn"),
+        ],
+    ])
+
+
+# ── Static texts ──────────────────────────────────────────────────────────────
 
 class script:
     START_TXT = (
         "<b>👋🏻 Hᴇʏ {} ɪ ᴀᴍ sᴀᴠᴇ ʀᴇsᴛʀɪᴄᴛᴇᴀᴅ ᴄᴏɴᴛᴀɴᴛ ʙᴏᴛ 🤖</b>\n"
         "<blockquote><b>ɪ ᴄᴀɴ ʜᴇʟᴘ ʏᴏᴜ ꜰᴏʀᴡᴀʀᴅ ʀᴇsᴛʀɪᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ ꜰʀᴏᴍ ᴛᴇʟᴇɢʀᴀᴍ ᴘᴏsᴛs.</b></blockquote>\n"
     )
-    
+
     HELP_TXT = (
         "<b>📚 Help & User Guide</b>\n"
         "<blockquote><b>1️⃣ Public Channels</b>\n"
@@ -161,7 +238,6 @@ class script:
         "Download files up to 4GB and beyond!</blockquote>\n"
     )
 
-    # ── FIX 2: blockquote progress bar with Download/Upload status ──
     @staticmethod
     def progress_text(status_emoji, status_label, completed, total,
                       filename, pct, speed, cur, tot, elapsed_ms, eta_ms):
@@ -179,7 +255,7 @@ class script:
         )
 
 
-# ── Batch State ───────────────────────────────
+# ── Batch State ───────────────────────────────────────────────────────────────
 
 class UserBatchState:
     def __init__(self, total_files, progress_msg, user_id):
@@ -211,9 +287,6 @@ async def _safe_edit(msg, text, markup=None):
         pass
 
 
-# ── FIX 4a: raise asyncio.CancelledError (not Exception) ──
-# so pyrogram treats it as a clean abort instead of logging ERROR
-
 async def batch_progress_callback(current, total, state: UserBatchState,
                                    filename, operation):
     if state.cancelled or batch_temp.IS_BATCH.get(state.user_id, True):
@@ -229,11 +302,7 @@ async def batch_progress_callback(current, total, state: UserBatchState,
     eta_secs = (total - current) / speed if speed > 0 else 0
     pct      = current * 100 / total if total > 0 else 0
 
-    if operation == "down":
-        emoji, label = "⬇️", "Downloading..."
-    else:
-        emoji, label = "⬆️", "Uploading..."
-
+    emoji, label = ("⬇️", "Downloading...") if operation == "down" else ("⬆️", "Uploading...")
     text = script.progress_text(
         emoji, label,
         state.completed_files, state.total_files,
@@ -243,86 +312,86 @@ async def batch_progress_callback(current, total, state: UserBatchState,
     await _safe_edit(state.progress_msg, text, markup=cancel_markup(state.user_id))
 
 
-# ── /start ────────────────────────────────────
+# ── /start  (NOT auto-deleted — it is the permanent home message) ─────────────
+
 @Client.on_message(filters.command(["start"]))
 async def send_start(client: Client, message: Message):
 
-    # Add user to DB if not exists
     if not await db.is_user_exist(message.from_user.id):
         await db.add_user(message.from_user.id, message.from_user.first_name)
 
-    # Add reaction (optional)
     try:
         await message.react(emoji=random.choice(REACTIONS), big=True)
     except Exception:
         pass
 
-    # Get bot info
-    bot = await client.get_me()
-
-    # Send text message instead of photo
-    await message.reply_text(
-        text=script.START_TXT.format(
-            message.from_user.mention,
-            bot.username,
-            bot.first_name
-        ),
-        reply_markup=InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton('ᴜᴘᴅᴀᴛᴇ', url='https://t.me/UnknownBotz'),
-                InlineKeyboardButton('sᴜᴘᴘᴏʀᴛ', url='https://t.me/UnknownBotzChat')
-            ],
-            [
-                InlineKeyboardButton("sᴇᴛᴛɪɴɢs", callback_data="settings_btn"),
-                InlineKeyboardButton("ᴀʙᴏᴜᴛ", callback_data="about_btn")
-            ]
-        ]),
+    # Send photo with the uniform Start keyboard
+    await message.reply_photo(
+        photo=START_IMG,
+        caption=script.START_TXT.format(message.from_user.mention),
+        reply_markup=start_keyboard(),
         parse_mode=enums.ParseMode.HTML,
-        disable_web_page_preview=True
     )
-    
 
 
-# ── /help ─────────────────────────────────────
+# ── /help  ────────────────────────────────────────────────────────────────────
 
 @Client.on_message(filters.command(["help"]))
 async def send_help(client: Client, message: Message):
-    await client.send_message(
-        message.chat.id, script.HELP_TXT,
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("❌ Close", callback_data="close_btn")]]),
-        parse_mode=enums.ParseMode.HTML
+    await delete_command(message)                       # delete user command
+    bot_msg = await client.send_photo(
+        message.chat.id,
+        photo=START_IMG,
+        caption=script.HELP_TXT,
+        reply_markup=InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("🏠 Home",  callback_data="start_btn"),
+                InlineKeyboardButton("❌ Close", callback_data="close_btn"),
+            ]
+        ]),
+        parse_mode=enums.ParseMode.HTML,
     )
+    asyncio.create_task(auto_delete(bot_msg))           # auto-delete bot reply
 
 
-# ── /plan /myplan /premium ────────────────────
+# ── /plan  /myplan  /premium ──────────────────────────────────────────────────
 
 @Client.on_message(filters.command(["plan", "myplan", "premium"]))
 async def send_plan(client: Client, message: Message):
-    await client.send_photo(
+    await delete_command(message)
+    bot_msg = await client.send_photo(
         message.chat.id, SUBSCRIPTION,
         caption=script.PREMIUM_TEXT.format(UPI_ID, QR_CODE),
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("📸 Send Payment Proof", url="https://t.me/DmOwner")],
-            [InlineKeyboardButton("❌ Close", callback_data="close_btn")]
+            [
+                InlineKeyboardButton("🏠 Home",  callback_data="start_btn"),
+                InlineKeyboardButton("❌ Close", callback_data="close_btn"),
+            ],
         ]),
-        parse_mode=enums.ParseMode.HTML
+        parse_mode=enums.ParseMode.HTML,
     )
+    asyncio.create_task(auto_delete(bot_msg))
 
 
-# ── /cancel ───────────────────────────────────
+# ── /cancel ───────────────────────────────────────────────────────────────────
 
 @Client.on_message(filters.command("cancel"))
 async def send_cancel(client: Client, message: Message):
+    await delete_command(message)
     uid = message.from_user.id
     batch_temp.IS_BATCH[uid] = True
     s = batch_temp.STATES.get(uid)
     if s:
         s.cancelled = True
-    await message.reply_text("❌ <b>Process Cancelled Successfully</b>",
-                              parse_mode=enums.ParseMode.HTML)
+    bot_msg = await message.reply_text(
+        "❌ <b>Process Cancelled Successfully</b>",
+        parse_mode=enums.ParseMode.HTML,
+    )
+    asyncio.create_task(auto_delete(bot_msg))
 
 
-# ── Inline Cancel button ──────────────────────
+# ── Inline Cancel button ──────────────────────────────────────────────────────
 
 @Client.on_callback_query(filters.regex(r"^cancel_batch_\d+$"), group=0)
 async def cancel_batch_callback(client: Client, cq: CallbackQuery):
@@ -335,39 +404,41 @@ async def cancel_batch_callback(client: Client, cq: CallbackQuery):
     if s:
         s.cancelled = True
     try:
-        await cq.message.edit_text("❌ <b>Process Cancelled Successfully</b>",
-                                   reply_markup=None, parse_mode=enums.ParseMode.HTML)
+        await cq.message.edit_text(
+            "❌ <b>Process Cancelled Successfully</b>",
+            reply_markup=None, parse_mode=enums.ParseMode.HTML,
+        )
     except Exception:
         pass
     await cq.answer("✅ Cancelled!")
 
 
-# ── Settings panel helper ─────────────────────
+# ── Settings panel (callback helper) ─────────────────────────────────────────
 
 async def settings_panel(client, cq):
-    uid = cq.from_user.id
+    uid   = cq.from_user.id
     badge = "💎 Premium Member" if await db.check_premium(uid) else "👤 Standard User"
-    await cq.edit_message_caption(
-        caption=(
-            f"<b>⚙️ Settings Dashboard</b>\n\n"
-            f"<b>Account Status:</b> {badge}\n"
-            f"<b>User ID:</b> <code>{uid}</code>\n\n"
-            f"<i>Customize your bot preferences below:</i>"
-        ),
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("📜 Command List",          callback_data="cmd_list_btn")],
-            [InlineKeyboardButton("📊 Usage Stats",           callback_data="user_stats_btn")],
-            [InlineKeyboardButton("🗑 Dump Channel Settings", callback_data="dump_chat_btn")],
-            [InlineKeyboardButton("🖼 Manage Thumbnail",      callback_data="thumb_btn")],
-            [InlineKeyboardButton("📝 Edit Caption",          callback_data="caption_btn")],
-            [InlineKeyboardButton("⬅️ Return to Home",        callback_data="start_btn")],
-        ]),
-        parse_mode=enums.ParseMode.HTML
+    caption = (
+        f"<b>⚙️ Settings Dashboard</b>\n\n"
+        f"<b>Account Status:</b> {badge}\n"
+        f"<b>User ID:</b> <code>{uid}</code>\n\n"
+        f"<i>Customize your bot preferences below:</i>"
     )
+    try:
+        await cq.edit_message_caption(
+            caption=caption,
+            reply_markup=settings_keyboard(),
+            parse_mode=enums.ParseMode.HTML,
+        )
+    except Exception:
+        await cq.edit_message_text(
+            text=caption,
+            reply_markup=settings_keyboard(),
+            parse_mode=enums.ParseMode.HTML,
+        )
 
 
-# ── Main save handler ─────────────────────────
-# FIX 1: Dump channel checked FIRST for both single & batch
+# ── Main save handler ─────────────────────────────────────────────────────────
 
 @Client.on_message(filters.text & filters.private & ~filters.regex("^/"))
 async def save(client: Client, message: Message):
@@ -376,7 +447,6 @@ async def save(client: Client, message: Message):
 
     uid = message.from_user.id
 
-    # ── FIX 1: dump channel guard — block before anything else ──
     dump_chat = await db.get_dump_chat(uid)
     if not dump_chat:
         return await message.reply_text(
@@ -387,7 +457,6 @@ async def save(client: Client, message: Message):
             parse_mode=enums.ParseMode.HTML
         )
 
-    # Prevent concurrent task
     if batch_temp.IS_BATCH.get(uid) is False:
         return await message.reply_text(
             "<b>⚠️ A Task is Already Running.</b>\n"
@@ -395,7 +464,6 @@ async def save(client: Client, message: Message):
             parse_mode=enums.ParseMode.HTML
         )
 
-    # Daily limit
     if await db.check_limit(uid):
         return await message.reply_photo(
             SUBSCRIPTION, caption=script.LIMIT_REACHED,
@@ -405,7 +473,6 @@ async def save(client: Client, message: Message):
             parse_mode=enums.ParseMode.HTML
         )
 
-    # Parse range
     datas = message.text.split("/")
     temp  = datas[-1].replace("?single", "").split("-")
     try:
@@ -423,7 +490,6 @@ async def save(client: Client, message: Message):
     is_batch    = "https://t.me/b/" in message.text
     is_public   = not is_private and not is_batch
 
-    # Session for private/restricted
     acc = None
     if not is_public:
         session_str = await db.get_session(uid)
@@ -520,7 +586,7 @@ async def save(client: Client, message: Message):
         batch_temp.STATES.pop(uid, None)
 
 
-# ── Handle one restricted message ────────────
+# ── Handle one restricted message ────────────────────────────────────────────
 
 async def handle_restricted_content(client, acc, message, chat_target,
                                      msgid, dump_chat, state: UserBatchState):
@@ -569,14 +635,13 @@ async def handle_restricted_content(client, acc, message, chat_target,
     tmp = f"downloads/{uid}_{msgid}"
     os.makedirs(tmp, exist_ok=True)
 
-    # Download
     try:
         file = await acc.download_media(
             msg, file_name=f"{tmp}/",
             progress=batch_progress_callback,
             progress_args=[state, fn, "down"]
         )
-    except asyncio.CancelledError:           # FIX 4a — clean cancel, no error log
+    except asyncio.CancelledError:
         shutil.rmtree(tmp, ignore_errors=True)
         return True
     except Exception as e:
@@ -589,9 +654,8 @@ async def handle_restricted_content(client, acc, message, chat_target,
         shutil.rmtree(tmp, ignore_errors=True)
         return True
 
-    state.file_start = time.time()   # reset for upload phase
+    state.file_start = time.time()
 
-    # Thumbnail
     ph = None
     tid = await db.get_thumbnail(uid)
     if tid:
@@ -608,7 +672,6 @@ async def handle_restricted_content(client, acc, message, chat_target,
         except Exception:
             pass
 
-    # Caption
     cc = await db.get_caption(uid)
     if cc:
         cap = cc.format(filename=fn, size=humanbytes(file_size))
@@ -617,7 +680,6 @@ async def handle_restricted_content(client, acc, message, chat_target,
         if msg.caption:
             cap += f"\n\n{msg.caption}"
 
-    # Upload
     try:
         if msg_type == "Document":
             await client.send_document(
@@ -636,10 +698,10 @@ async def handle_restricted_content(client, acc, message, chat_target,
         elif msg_type == "Photo":
             await client.send_photo(dump_chat, file, caption=cap)
 
-    except asyncio.CancelledError:           # FIX 4a
+    except asyncio.CancelledError:
         pass
 
-    except (ChannelInvalid, ChannelPrivate,  # FIX 4b — invalid dump channel
+    except (ChannelInvalid, ChannelPrivate,
             ChatAdminRequired, ChatWriteForbidden) as e:
         logger.error(f"Dump channel invalid (user {uid}): {e}")
         await _safe_edit(state.progress_msg,
@@ -660,7 +722,7 @@ async def handle_restricted_content(client, acc, message, chat_target,
     return False if state.cancelled else True
 
 
-# ── Callback router ───────────────────────────
+# ── Callback router ───────────────────────────────────────────────────────────
 
 @Client.on_callback_query(group=1)
 async def button_callbacks(client: Client, cq: CallbackQuery):
@@ -669,67 +731,86 @@ async def button_callbacks(client: Client, cq: CallbackQuery):
     if not msg or data.startswith("cancel_batch_"):
         return
 
+    # ── Pop-up alerts ─────────────────────────────────────────────────────────
     if data == "dev_info":
         await cq.answer(dev_text, show_alert=True)
 
     elif data == "channels_info":
         await cq.answer(channels_text, show_alert=True)
 
+    # ── Settings panel ────────────────────────────────────────────────────────
     elif data == "settings_btn":
         await settings_panel(client, cq)
 
+    # ── Premium ───────────────────────────────────────────────────────────────
     elif data == "buy_premium":
-        await client.edit_message_media(
-            msg.chat.id, msg.id,
-            media=InputMediaPhoto(SUBSCRIPTION, caption=script.PREMIUM_TEXT.format(UPI_ID, QR_CODE)),
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("📸 Send Payment Proof", url="https://t.me/DmOwner")],
-                [InlineKeyboardButton("⬅️ Back", callback_data="start_btn")]
-            ])
-        )
-
-    elif data == "help_btn":
-        await client.edit_message_caption(
-            msg.chat.id, msg.id, caption=script.HELP_TXT,
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("⬅️ Back", callback_data="start_btn")
-            ]]),
-            parse_mode=enums.ParseMode.HTML
-        )
-
-    elif data == "about_btn":
-        await client.edit_message_caption(
-            msg.chat.id, msg.id, caption=script.ABOUT_TXT,
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("⬅️ Back", callback_data="start_btn")
-            ]]),
-            parse_mode=enums.ParseMode.HTML
-        )
-
-    elif data == "start_btn":
-        bot = await client.get_me()
         try:
-            r = requests.get(random.choice([
-                "https://api.waifu.pics/sfw/waifu",
-                "https://nekos.life/api/v2/img/waifu"
-            ]), timeout=5)
-            photo_url = r.json()["url"]
+            await client.edit_message_media(
+                msg.chat.id, msg.id,
+                media=InputMediaPhoto(
+                    SUBSCRIPTION,
+                    caption=script.PREMIUM_TEXT.format(UPI_ID, QR_CODE),
+                ),
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("📸 Send Payment Proof", url="https://t.me/DmOwner")],
+                    [
+                        InlineKeyboardButton("🏠 Home",  callback_data="start_btn"),
+                        InlineKeyboardButton("❌ Close", callback_data="close_btn"),
+                    ],
+                ]),
+            )
         except Exception:
-            photo_url = "https://i.postimg.cc/cC7txyhz/15.png"
-        await client.edit_message_media(
-            msg.chat.id, msg.id,
-            media=InputMediaPhoto(photo_url, caption=script.START_TXT.format(
-                cq.from_user.mention, bot.username, bot.first_name)),
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("💎 Buy Premium",    callback_data="buy_premium"),
-                 InlineKeyboardButton("🆘 Help & Guide",   callback_data="help_btn")],
-                [InlineKeyboardButton("⚙️ Settings Panel", callback_data="settings_btn"),
-                 InlineKeyboardButton("ℹ️ About Bot",      callback_data="about_btn")],
-                [InlineKeyboardButton("📢 Channels",       callback_data="channels_info"),
-                 InlineKeyboardButton("👨‍💻 Developers",    callback_data="dev_info")],
-            ])
-        )
+            pass
 
+    # ── Help ──────────────────────────────────────────────────────────────────
+    elif data == "help_btn":
+        try:
+            await client.edit_message_caption(
+                msg.chat.id, msg.id,
+                caption=script.HELP_TXT,
+                reply_markup=InlineKeyboardMarkup([
+                    [
+                        InlineKeyboardButton("🏠 Home",  callback_data="start_btn"),
+                        InlineKeyboardButton("❌ Close", callback_data="close_btn"),
+                    ]
+                ]),
+                parse_mode=enums.ParseMode.HTML,
+            )
+        except Exception:
+            pass
+
+    # ── About ─────────────────────────────────────────────────────────────────
+    elif data == "about_btn":
+        try:
+            await client.edit_message_caption(
+                msg.chat.id, msg.id,
+                caption=script.ABOUT_TXT,
+                reply_markup=InlineKeyboardMarkup([
+                    [
+                        InlineKeyboardButton("🏠 Home",  callback_data="start_btn"),
+                        InlineKeyboardButton("❌ Close", callback_data="close_btn"),
+                    ]
+                ]),
+                parse_mode=enums.ParseMode.HTML,
+            )
+        except Exception:
+            pass
+
+    # ── Home (start_btn) ──────────────────────────────────────────────────────
+    elif data == "start_btn":
+        try:
+            await client.edit_message_media(
+                msg.chat.id, msg.id,
+                media=InputMediaPhoto(
+                    START_IMG,
+                    caption=script.START_TXT.format(cq.from_user.mention),
+                ),
+                reply_markup=start_keyboard(),
+            )
+        except Exception:
+            pass
+
+    # ── Close ─────────────────────────────────────────────────────────────────
     elif data == "close_btn":
         await msg.delete()
 
